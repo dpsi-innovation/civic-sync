@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>CIVICSYNC Civil — City Safety App</title>
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#0d141b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+</head>
+<body>
+  <div class="hazard-tape"></div>
+
+  <!-- install banner -->
+  <div class="install-banner" id="installBanner" hidden>
+    <div>
+      <b>Install CIVICSYNC Civil</b>
+      <span>Add to your home screen — works full-screen, offline shell.</span>
+    </div>
+    <button id="installBtn" class="btn primary small" type="button">INSTALL</button>
+    <button id="installX" class="btn ghost small" type="button" aria-label="dismiss">✕</button>
+  </div>
+
+  <header class="app-top">
+    <div class="brand">
+      <div class="brand-icon" aria-hidden="true">
+        <!-- CivicSync mark: road-to-horizon + orbiting satellite -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+             stroke-linecap="round" stroke-linejoin="round">
+          <!-- horizon (split so the road emerges through it) -->
+          <path d="M9 9.9 H11.2 M12.8 9.9 H15" stroke-width="1.4"/>
+          <!-- satellite -->
+          <rect x="11" y="1.9" width="2" height="2" rx=".45"/>
+          <rect x="7.2" y="2.55" width="2.7" height="1.6" rx=".35"/>
+          <rect x="14.1" y="2.55" width="2.7" height="1.6" rx=".35"/>
+          <path d="M9.9 3.35 H11 M13 3.35 H14.1" stroke-width="1.4"/>
+          <!-- road edges -->
+          <path d="M5.8 22 L10.9 9.9 M13.1 9.9 L18.2 22"/>
+          <!-- dashed centerline -->
+          <path d="M12 12.7 V20.7" stroke-width="2.1" stroke-dasharray="2.7 2.2"/>
+        </svg>
+      </div>
+      <div>
+        <h2>Civic<span>Sync</span></h2>
+        <p class="tagline">Road conditions, seen from orbit.</p>
+      </div>
+    </div>
+    <div class="top-right">
+      <span class="system-pill" id="appPill">◌ connecting</span>
+      <button id="themeToggle" class="btn ghost sm" type="button">☀</button>
+      <button id="accentBtn" class="btn ghost sm" type="button" title="Pick your theme colour">🎨<span class="swatch"></span></button>
+      <input id="accentPick" type="color" value="#f5a623" style="display:none">
+      <button id="colorToggle" class="btn ghost sm" type="button" aria-pressed="false">◐</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- ============ DASHBOARD ============ -->
+    <section id="tab-dashboard" class="tab active">
+      <h1 class="page-title">Your city, right now</h1>
+
+      <div class="stats2">
+        <div class="stat">
+          <div class="stat-head">Open reports <span class="stat-ico warm">☷</span></div>
+          <div class="stat-num" id="dOpen">–</div>
+          <div class="stat-foot">being handled by the city</div>
+        </div>
+        <div class="stat">
+          <div class="stat-head">Resolved <span class="stat-ico cool">✔</span></div>
+          <div class="stat-num" id="dResolved">–</div>
+          <div class="stat-foot">closed out</div>
+        </div>
+      </div>
+      <div class="stats2">
+        <div class="stat">
+          <div class="stat-head">Node status <span class="stat-ico hot">◉</span></div>
+          <div class="stat-num" id="dNode">–</div>
+          <div class="stat-foot" id="dNodeFoot">surveillance core</div>
+        </div>
+        <div class="stat">
+          <div class="stat-head">Anomaly score <span class="stat-ico warm">σ</span></div>
+          <div class="stat-num" id="dAnomaly">–</div>
+          <div class="stat-foot">AI scene deviation</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div><h3>Latest city reports</h3><p>live from the node — demo rows marked DEMO</p></div>
+        </div>
+        <div class="mini-list" id="dashRecent"><div class="mini-item muted">loading…</div></div>
+      </div>
+
+      <div class="quick-row">
+        <button class="btn primary big" data-goto="civic" type="button">📷 REPORT A HAZARD</button>
+        <button class="btn big" data-goto="live" type="button">▶ LIVE FEED</button>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div><h3>City map — report pins nearby</h3><p>real street tiles, tap a pin for its story</p></div>
+        </div>
+        <div class="city-map" id="cityMap" aria-label="City report map"></div>
+        <p class="footnote">pins = city reports · yours too once submitted</p>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div><h3>Google Maps road feed</h3><p>the street you're helping to keep safe</p></div>
+          <span class="tag blue">GOOGLE MAPS</span>
+        </div>
+        <div class="gmap-frame gmap-sm">
+          <iframe id="gmFrame" title="Google Maps live road view" loading="lazy"
+                  referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+        <div class="map-actions">
+          <a class="btn primary small" id="gmRoadLink" target="_blank" rel="noopener noreferrer" href="#">▷ Open in Google Maps ↗</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ LIVE ============ -->
+    <section id="tab-live" class="tab">
+      <h1 class="page-title">Live city feed</h1>
+      <div class="panel">
+        <div class="panel-head">
+          <div><h3>AI-annotated street camera</h3><p>the same one node the console watches</p></div>
+          <span class="tag blue" id="liveLabel">SOURCE –</span>
+        </div>
+        <div class="camera-shell">
+          <img id="liveCam" alt="Live annotated feed">
+          <div class="cam-off" id="camOff" hidden>▲ NO SIGNAL<br><small>the node camera is re-syncing</small></div>
+        </div>
+        <div class="kpi-row k3">
+          <div class="mini"><div class="k">SCENE FPS</div><div class="v" id="lFps">–</div></div>
+          <div class="mini"><div class="k">SUBJECTS SEEN</div><div class="v" id="lFaces">0</div></div>
+          <div class="mini"><div class="k">SCENE LIGHT</div><div class="v" id="lLight">–</div></div>
+        </div>
+      </div>
+      <!-- civil mode: admins open the console directly on the node's operator
+           port; citizens never see a switch to the admin dashboard. -->
+    </section>
+
+    <!-- ============ CIVIC ============ -->
+    <section id="tab-civic" class="tab">
+      <h1 class="page-title">Report a hazard</h1>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div><h3>Taken on your device — verified proof</h3>
+          <p>must be a live capture just taken; the node checks freshness + location</p></div>
+        </div>
+
+        <div class="cam-capture">
+          <video id="cv" playsinline muted autoplay hidden></video>
+          <canvas id="cs" hidden></canvas>
+          <img id="photoPreview" alt="capture preview" hidden>
+          <div class="cam-hint" id="camHint">camera preview will appear here</div>
+          <div class="cam-actions">
+            <button id="openCam" class="btn ghost small" type="button">◎ OPEN CAMERA</button>
+            <button id="shutter" class="btn primary small" type="button" disabled>● CAPTURE</button>
+            <label class="btn ghost small file-fallback">↺ FILE (live capture mode)<input type="file" id="photoInput" accept="image/*" capture="environment" hidden></label>
+          </div>
+        </div>
+        <p class="proof-pill" id="proofPill">◌ NO PROOF CAPTURED YET</p>
+        <button id="retake" class="btn ghost sm" type="button" hidden>↺ retake</button>
+
+        <label class="field"><span>What do you see?</span>
+          <select id="rpType">
+            <option>Road Debris</option><option>Pothole</option><option>Blocked Drain</option>
+            <option>Waterlogging</option><option>Broken Streetlight</option>
+            <option>Damaged Sign</option><option>Other</option>
+          </select>
+        </label>
+        <label class="field"><span>Severity</span>
+          <select id="rpSeverity"><option>Low</option><option selected>Medium</option><option>High</option></select>
+        </label>
+        <label class="field"><span>Location</span>
+          <input id="rpLocation" placeholder="street / nearest landmark"></label>
+        <label class="field"><span>Details</span>
+          <textarea id="rpDescription" rows="2" placeholder="what is happening"></textarea></label>
+
+        <button id="rpSubmit" class="btn primary big" type="button">✔ SEND REPORT TO THE NODE</button>
+        <p class="footnote" id="rpHint">Your photo carries a signed EXIF capture stamp the node re-verifies — nothing edited or re-used gets accepted.</p>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><div><h3>My recent reports</h3><p>tracked on this device</p></div></div>
+        <div class="mini-list" id="myReports"><div class="mini-item muted">nothing sent yet — your submissions appear here</div></div>
+      </div>
+    </section>
+
+    <!-- ============ SYSTEM ============ -->
+    <section id="tab-system" class="tab">
+      <h1 class="page-title">Node &amp; system</h1>
+
+      <div class="panel">
+        <div class="panel-head"><div><h3>Trained AI — scene baseline</h3>
+        <p>Gaussian anomaly core watching the shared camera</p></div></div>
+        <table class="data-table">
+          <tr><td>AI</td><td id="sAiName">–</td></tr>
+          <tr><td>TRAINING SAMPLES</td><td id="sSamples">–</td></tr>
+          <tr><td>ALERT THRESHOLD</td><td id="sThreshold">–</td></tr>
+        </table>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><div><h3>Node health</h3><p>this single node serves both the civil app &amp; the console</p></div></div>
+        <table class="data-table">
+          <tr><td>NODE MODE</td><td id="sMode">–</td></tr>
+          <tr><td>NODE FPS</td><td id="sFps">–</td></tr>
+          <tr><td>CAMERA</td><td id="sCam">–</td></tr>
+          <tr><td>VERSION</td><td id="sVersion">–</td></tr>
+        </table>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><div><h3>Doors</h3><p>PWA + install</p></div></div>
+        <p class="footnote">Tip: use the INSTALL button at the top to pin CIVICSYNC to your home screen.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- bottom tab bar -->
+  <nav class="tabs" id="tabbar">
+    <button class="tabbtn active" data-tab="dashboard" type="button"><span class="tico">▦</span><span>Dashboard</span></button>
+    <button class="tabbtn" data-tab="live" type="button"><span class="tico">◉</span><span>Live</span></button>
+    <button class="tabbtn" data-tab="civic" type="button"><span class="tico">📷</span><span>Civic</span></button>
+    <button class="tabbtn" data-tab="system" type="button"><span class="tico">⚙</span><span>System</span></button>
+  </nav>
+
+  <div class="toast-zone" id="toast-zone"></div>
+
+  <script src="js/proof.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

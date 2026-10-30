@@ -1,0 +1,67 @@
+{
+  "camera": {
+    "source": 0,
+    "frame_width": 640,
+    "frame_height": 480,
+    "on_failure": "offline",
+    "sources": [
+      {
+        "source": "demoset/street_people.mp4",
+        "label": "DELHI PUBLIC SCHOOL INDIRAPURAM - SCHOOL GATE ROAD (LIVE DEMO REPLAY)",
+        "lat": 28.6469,
+        "lon": 77.3613
+      },
+      {
+        "source": "https://wzmedia.dot.ca.gov/D7/CCTV-196.stream/playlist.m3u8",
+        "label": "I-110 : (196) Avenue 26 Off Ramp \u00b7 Cypress Park",
+        "route": "I-110",
+        "place": "Cypress Park",
+        "lat": 34.0837,
+        "lon": -118.2215
+      },
+      {
+        "source": "https://wzmedia.dot.ca.gov/D7/CCTV-2.stream/playlist.m3u8",
+        "label": "I-5 : (2) Slauson Ave \u00b7 Los Angeles",
+        "route": "I-5",
+        "place": "Los Angeles",
+        "lat": 33.97857,
+        "lon": -118.12791
+      },
+      {
+        "source": "https://wzmedia.dot.ca.gov/D7/CCTV-17.stream/playlist.m3u8",
+        "label": "I-5 : (17) South of I-10 \u00b7 Los Angeles",
+        "route": "I-5",
+        "place": "Los Angeles",
+        "lat": 34.05367,
+        "lon": -118.21391
+      },
+      {
+        "source": 0,
+        "label": "NODE CAM - LOCAL WEBCAM",
+        "lat": null,
+        "lon": null
+      }
+    ]
+  },
+  "camera_id": "DPSI-CAM-01",
+  "sector": "DELHI-PUBLIC-SCHOOL-INDIRAPURAM",
+  "detection": {
+    "mog2_var_threshold": 30,
+    "min_motion_area_ratio": 0.015,
+    "face_detect_interval": 3,
+    "edge_sample_scale": 0.25
+  },
+  "anomaly": {
+    "alert_threshold": null,
+    "alert_cooldown_seconds": 25,
+    "face_event_cooldown_seconds": 12
+  },
+  "stream": {
+    "jpeg_quality": 80,
+    "target_fps": 20
+  },
+  "server": {
+    "host": "0.0.0.0",
+    "port": 8000
+  }
+}

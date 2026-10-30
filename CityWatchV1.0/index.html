@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CIVICSYNC — Admin Console</title>
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+</head>
+<body>
+  <div class="hazard-tape"></div>
+
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">
+          <!-- CivicSync mark: road-to-horizon + orbiting satellite -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round">
+            <!-- horizon (split so the road emerges through it) -->
+            <path d="M9 9.9 H11.2 M12.8 9.9 H15" stroke-width="1.4"/>
+            <!-- satellite -->
+            <rect x="11" y="1.9" width="2" height="2" rx=".45"/>
+            <rect x="7.2" y="2.55" width="2.7" height="1.6" rx=".35"/>
+            <rect x="14.1" y="2.55" width="2.7" height="1.6" rx=".35"/>
+            <path d="M9.9 3.35 H11 M13 3.35 H14.1" stroke-width="1.4"/>
+            <!-- road edges -->
+            <path d="M5.8 22 L10.9 9.9 M13.1 9.9 L18.2 22"/>
+            <!-- dashed centerline -->
+            <path d="M12 12.7 V20.7" stroke-width="2.1" stroke-dasharray="2.7 2.2"/>
+          </svg>
+        </div>
+        <div>
+          <h2>Civic<span>Sync</span></h2>
+          <p class="tagline">Road conditions, seen from orbit.</p>
+        </div>
+      </div>
+
+      <nav aria-label="Main">
+        <a href="#dashboard" class="nav-link active">▦&nbsp; Overview</a>
+        <a href="#surveillance" class="nav-link">◉&nbsp; Live Surveillance</a>
+        <a href="#ai" class="nav-link">✦&nbsp; Trained AI</a>
+        <a href="#scanner" class="nav-link">◎&nbsp; Report Intake</a>
+        <a href="#reports" class="nav-link">☷&nbsp; City Reports</a>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="unit-box">
+          <div class="led-row"><span>NODE</span><span class="led ok" id="ledSystem"></span></div>
+          <div class="led-row"><span>AI CORE</span><span class="led ok" id="ledAI"></span></div>
+          <div class="led-row"><span>MODE</span><b id="lblMode">BOOT</b></div>
+          <div class="led-row"><span>CIVIL APP</span><a href="/app" style="color:var(--brand-soft); text-decoration:underline;">open ➚</a></div>
+        </div>
+        <p class="sidebar-footer">CIVICSYNC • ONE NODE · TWO DOORS</p>
+      </div>
+    </aside>
+
+    <main class="main" id="dashboard">
+      <header class="topbar">
+        <div>
+          <p class="crumb">CIVICSYNC / ADMIN CONSOLE</p>
+          <h1>Overview</h1>
+        </div>
+        <div class="top-right">
+          <span class="system-pill">● System ready</span>
+          <button id="themeToggle" class="btn ghost" type="button" aria-pressed="false">☀ LIGHT OPS</button>
+          <button id="accentBtn" class="btn ghost" type="button" title="Pick your theme colour">🎨<span class="swatch"></span> ACCENT</button>
+          <input id="accentPick" type="color" value="#f5a623" style="display:none">
+          <button id="colorToggle" class="btn ghost" type="button" aria-pressed="false">◐ CLASSIC</button>
+          <div class="avatar">AD</div>
+        </div>
+      </header>
+
+      <!-- ============ KPI STATS ============ -->
+      <section class="stats" id="metrics">
+        <div class="stat"><div class="stat-head">City reports <span class="stat-ico warm">☷</span></div>
+          <div class="stat-num" id="statReports">0</div><div class="stat-foot">total civic dataset</div></div>
+        <div class="stat"><div class="stat-head">Critical severity <span class="stat-ico hot">!</span></div>
+          <div class="stat-num" id="statCritical">0</div><div class="stat-foot">needs review now</div></div>
+        <div class="stat"><div class="stat-head">Anomaly score <span class="stat-ico cool">σ</span></div>
+          <div class="stat-num" id="statAnomaly">–</div><div class="stat-foot">AI scene deviation</div></div>
+        <div class="stat"><div class="stat-head">Subjects on scene <span class="stat-ico cool">◉</span></div>
+          <div class="stat-num" id="statFaces">0</div><div class="stat-foot">live AI detection</div></div>
+      </section>
+
+      <!-- ============ SURVEILLANCE ============ -->
+      <section class="panel" id="surveillance">
+        <div class="panel-head">
+          <div><h3>Live camera feed</h3><p>AI-annotated feed · demo dataset replaying, real cameras follow automatically</p></div>
+          <span class="tag blue" id="camSource">SOURCE –</span>
+        </div>
+        <div class="camera-shell">
+          <img id="liveCam" alt="Live annotated city feed" style="width:100%; display:block;">
+          <div class="cam-off" id="camOff" hidden>▲ NO SIGNAL — node re-syncing<br><small>check the terminal window</small></div>
+          <span class="rec-badge">● REC</span>
+        </div>
+        <div class="kpi-row">
+          <div class="mini"><div class="k">NODE FPS</div><div class="v" id="kFps">–</div></div>
+          <div class="mini"><div class="k">MOTION ZONES</div><div class="v" id="kMotion">0</div></div>
+          <div class="mini"><div class="k">SCENE LIGHT</div><div class="v" id="kLight">–</div></div>
+          <div class="mini"><div class="k">EDGE DENSITY</div><div class="v" id="kEdge">–</div></div>
+        </div>
+        <canvas id="chartFaces" data-draw="faces" style="width:100%; height:54px; margin-top:12px;"></canvas>
+      </section>
+
+      <!-- ============ LIVE CITY MAP ============ -->
+      <section class="panel" id="mapview">
+        <div class="panel-head">
+          <div><h3>Live city map — incident pins</h3><p>Real street tiles with every city report pinned at its location</p></div>
+          <span class="tag blue" id="mapTag">◌ LOADING TILES</span>
+        </div>
+        <div class="city-map" id="cityMap" aria-label="Live incident map"></div>
+        <div class="map-legend">
+          <span><i class="pin" style="background:var(--crit)"></i> High / critical</span>
+          <span><i class="pin" style="background:var(--warn)"></i> Medium</span>
+          <span><i class="pin" style="background:var(--ok)"></i> Resolved / low</span>
+          <span class="muted">zoom to inspect · tap a pin for details</span>
+        </div>
+      </section>
+
+      <!-- ============ GOOGLE MAPS LIVE ROAD VIEW ============ -->
+      <section class="panel" id="gmapview">
+        <div class="panel-head">
+          <div><h3>Google Maps live road feed</h3><p>Street map imagery centered on the node camera — live traffic just a click away</p></div>
+          <span class="tag blue">GOOGLE MAPS</span>
+        </div>
+        <div class="gmap-frame">
+          <iframe id="gmFrame" title="Google Maps live road view at the node camera" loading="lazy"
+                  referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+        <div class="map-actions">
+          <a class="btn primary small" id="gmRoadLink" target="_blank" rel="noopener noreferrer" href="#">▷ Open your Google Maps location ↗</a>
+          <a class="btn ghost small" id="gmTrafficLink" target="_blank" rel="noopener noreferrer" href="#">▷ Try Google Maps live-traffic view ↗</a>
+        </div>
+        <p class="footnote">Google Maps shows map imagery and, where available, traffic conditions — for live road video the AI-annotated camera above stays your authorized feed. The embedded map needs internet.</p>
+      </section>
+
+      <!-- ============ AI MODEL CARD ============ -->
+      <section class="panel" id="ai">
+        <div class="panel-head">
+          <div><h3>Trained AI — scene baseline model</h3><p>Gaussian anomaly core · learns the normal scene, flags deviations</p></div>
+          <div class="panel-head-right">
+            <span class="tag amber" id="aiBadge">◌ LOADING</span>
+            <button id="retrainBtn" class="btn primary small" type="button">⟳ RETRAIN</button>
+          </div>
+        </div>
+        <table class="data-table">
+          <tr><td>AI VERSION</td><td id="aiVersion">–</td></tr>
+          <tr><td>SESSION</td><td id="aiMode">–</td></tr>
+          <tr><td>TRAINING SAMPLES</td><td id="aiSamples">–</td></tr>
+          <tr><td>ALERT THRESHOLD</td><td id="aiThreshold">–</td></tr>
+          <tr><td>LAST TRAINED</td><td id="aiTrainedAt">–</td></tr>
+        </table>
+        <canvas id="chartScores" data-draw="scores" style="width:100%; height:64px; margin-top:10px;"></canvas>
+        <p class="footnote" id="retrainHint">Retraining re-fits the baseline on the last minutes of scene data.</p>
+      </section>
+
+      <!-- ============ SCANNER ============ -->
+      <section class="panel" id="scanner">
+        <div class="panel-head">
+          <div><h3>Report intake — quick capture</h3><p>Operator-side hazard logging with instant classification</p></div>
+        </div>
+        <label class="field"><span>Report photo</span><input type="file" id="photoInput" accept="image/*">
+          <img id="photoPreview" alt="report preview" hidden style="max-width:180px; border-radius:9px; margin-top:8px;"></label>
+        <div class="form-grid">
+          <label class="field"><span>Hazard</span><input id="hgType" placeholder="e.g. Road debris"></label>
+          <label class="field"><span>Location</span><input id="hgLocation" placeholder="street / landmark"></label>
+          <label class="field"><span>Severity</span><select id="hgSeverity"><option>Low</option><option selected>Medium</option><option>High</option></select></label>
+          <label class="field"><span>Details</span><input id="hgDescription" placeholder="what is happening"></label>
+        </div>
+        <button id="hgSubmit" class="btn primary" type="button">✔ FILE REPORT</button>
+      </section>
+
+      <!-- ============ REPORTS TABLE ============ -->
+      <section class="panel" id="reports">
+        <div class="panel-head">
+          <div><h3>City reports</h3><p>Civic dataset + all verified citizen submissions · demo rows marked DEMO</p></div>
+          <button id="exportBtn" class="btn ghost small" type="button">↓ EXPORT LOG</button>
+        </div>
+        <div class="filters">
+          <input id="searchReports" placeholder="Search hazard or location…">
+          <select id="filterSeverity"><option value="">All severities</option><option>High</option><option>Medium</option><option>Low</option></select>
+          <select id="filterStatus"><option value="">All statuses</option><option>Pending</option><option>In Progress</option><option>Resolved</option></select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>HAZARD</th><th>LOCATION</th><th>SEVERITY</th><th>STATUS</th><th>SOURCE</th><th>ACTIONS</th></tr></thead>
+            <tbody id="reportsBody"><tr><td colspan="6" class="empty">Loading city dataset…</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="toast-zone" id="toast-zone"></div>
+    </main>
+  </div>
+
+  <script src="js/proof.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
